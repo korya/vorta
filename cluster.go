@@ -14,12 +14,12 @@ import (
 
 // TunnelCluster manages multiple connections to the localtunnel server
 type TunnelCluster struct {
-	info       *TunnelInfo
-	options    *TunnelOptions
-	events     *TunnelEvents
+	info        *TunnelInfo
+	options     *TunnelOptions
+	events      *TunnelEvents
 	connections []*TunnelConnection
-	mutex      sync.RWMutex
-	closed     bool
+	mutex       sync.RWMutex
+	closed      bool
 }
 
 // TunnelConnection represents a single connection to the tunnel server
@@ -62,11 +62,11 @@ func (tc *TunnelCluster) Start(ctx context.Context) error {
 		conn := &TunnelConnection{
 			cluster: tc,
 		}
-		
+
 		tc.mutex.Lock()
 		tc.connections = append(tc.connections, conn)
 		tc.mutex.Unlock()
-		
+
 		go conn.connect(ctx, host, tc.info.Port)
 	}
 
@@ -80,13 +80,13 @@ func (tc *TunnelCluster) Start(ctx context.Context) error {
 func (tc *TunnelCluster) Close() {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
-	
+
 	if tc.closed {
 		return
 	}
-	
+
 	tc.closed = true
-	
+
 	for _, conn := range tc.connections {
 		conn.close()
 	}
@@ -96,7 +96,7 @@ func (tc *TunnelCluster) Close() {
 func (tc *TunnelCluster) maintainConnections(ctx context.Context, host string, port int) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -111,11 +111,11 @@ func (tc *TunnelCluster) maintainConnections(ctx context.Context, host string, p
 func (tc *TunnelCluster) checkConnections(ctx context.Context, host string, port int) {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
-	
+
 	if tc.closed {
 		return
 	}
-	
+
 	for _, conn := range tc.connections {
 		if !conn.isActive() {
 			go conn.connect(ctx, host, port)
@@ -127,13 +127,13 @@ func (tc *TunnelCluster) checkConnections(ctx context.Context, host string, port
 func (conn *TunnelConnection) connect(ctx context.Context, host string, port int) {
 	conn.mutex.Lock()
 	defer conn.mutex.Unlock()
-	
+
 	if conn.active {
 		return
 	}
-	
+
 	address := fmt.Sprintf("%s:%d", host, port)
-	
+
 	// Connect to the tunnel server
 	netConn, err := net.DialTimeout("tcp", address, 10*time.Second)
 	if err != nil {
@@ -143,10 +143,10 @@ func (conn *TunnelConnection) connect(ctx context.Context, host string, port int
 		}
 		return
 	}
-	
+
 	conn.conn = netConn
 	conn.active = true
-	
+
 	// Handle the connection
 	go conn.handleConnection(ctx)
 }
@@ -154,17 +154,17 @@ func (conn *TunnelConnection) connect(ctx context.Context, host string, port int
 // handleConnection processes incoming requests on this connection
 func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 	defer conn.close()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
 		}
-		
+
 		// Set read deadline
 		conn.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		
+
 		// Create connection to local server
 		localConn, err := conn.connectToLocal()
 		if err != nil {
@@ -174,10 +174,10 @@ func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 			}
 			continue
 		}
-		
+
 		// Create header transformer
 		transformer := NewHeaderHostTransformer(conn.cluster.options.LocalHost + fmt.Sprintf(":%d", conn.cluster.options.Port))
-		
+
 		// Handle the request/response cycle
 		go conn.proxyConnection(localConn, transformer)
 	}
@@ -186,7 +186,7 @@ func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 // connectToLocal creates a connection to the local server
 func (conn *TunnelConnection) connectToLocal() (net.Conn, error) {
 	address := fmt.Sprintf("%s:%d", conn.cluster.options.LocalHost, conn.cluster.options.Port)
-	
+
 	if conn.cluster.options.LocalHTTPS {
 		// Use TLS for HTTPS
 		config := &tls.Config{
@@ -194,34 +194,34 @@ func (conn *TunnelConnection) connectToLocal() (net.Conn, error) {
 		}
 		return tls.Dial("tcp", address, config)
 	}
-	
+
 	return net.Dial("tcp", address)
 }
 
 // proxyConnection handles bidirectional data transfer
 func (conn *TunnelConnection) proxyConnection(localConn net.Conn, transformer *HeaderHostTransformer) {
 	defer localConn.Close()
-	
+
 	// Create pipes for bidirectional communication
 	done := make(chan struct{}, 2)
-	
+
 	// Remote -> Local (with header transformation)
 	go func() {
 		defer func() { done <- struct{}{} }()
-		
+
 		// For the first request, transform headers
 		transformer.Transform(conn.conn, localConn)
-		
+
 		// Then copy the rest directly
 		io.Copy(localConn, conn.conn)
 	}()
-	
+
 	// Local -> Remote
 	go func() {
 		defer func() { done <- struct{}{} }()
 		io.Copy(conn.conn, localConn)
 	}()
-	
+
 	// Wait for either direction to complete
 	<-done
 }
@@ -232,12 +232,12 @@ func extractRequestInfo(data []byte) *RequestInfo {
 	if len(lines) == 0 {
 		return nil
 	}
-	
+
 	parts := strings.Fields(lines[0])
 	if len(parts) < 3 {
 		return nil
 	}
-	
+
 	return &RequestInfo{
 		Method: parts[0],
 		Path:   parts[1],
@@ -256,11 +256,11 @@ func (conn *TunnelConnection) isActive() bool {
 func (conn *TunnelConnection) close() {
 	conn.mutex.Lock()
 	defer conn.mutex.Unlock()
-	
+
 	if !conn.active {
 		return
 	}
-	
+
 	conn.active = false
 	if conn.conn != nil {
 		conn.conn.Close()

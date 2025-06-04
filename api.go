@@ -18,11 +18,11 @@ func ConnectAndOpen(port int, options *TunnelOptions) (*Tunnel, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if err := tunnel.Open(); err != nil {
 		return nil, err
 	}
-	
+
 	return tunnel, nil
 }
 
@@ -32,10 +32,10 @@ func ConnectWithContext(ctx context.Context, port int, options *TunnelOptions) (
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Override the tunnel's context with the provided one
 	tunnel.ctx, tunnel.cancel = context.WithCancel(ctx)
-	
+
 	return tunnel, nil
 }
 
@@ -48,22 +48,22 @@ func ExampleUsage() {
 		return
 	}
 	defer tunnel.Close()
-	
+
 	// Open the tunnel
 	if err := tunnel.Open(); err != nil {
 		fmt.Printf("Error opening tunnel: %v\n", err)
 		return
 	}
-	
+
 	// Get the URL
 	url, err := tunnel.URL()
 	if err != nil {
 		fmt.Printf("Error getting URL: %v\n", err)
 		return
 	}
-	
+
 	fmt.Printf("Tunnel URL: %s\n", url)
-	
+
 	// Listen for events
 	events := tunnel.Events()
 	go func() {

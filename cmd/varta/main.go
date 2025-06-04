@@ -16,20 +16,20 @@ import (
 
 // CLI options
 var (
-	port        = flag.Int("port", 0, "Internal HTTP server port")
-	portShort   = flag.Int("p", 0, "Internal HTTP server port (short)")
-	host        = flag.String("host", "https://localtunnel.me", "Upstream server")
-	hostShort   = flag.String("h", "https://localtunnel.me", "Upstream server (short)")
-	subdomain   = flag.String("subdomain", "", "Request specific subdomain")
-	subShort    = flag.String("s", "", "Request specific subdomain (short)")
-	localHost   = flag.String("local-host", "localhost", "Tunnel traffic to alternative localhost")
-	localShort  = flag.String("l", "localhost", "Tunnel traffic to alternative localhost (short)")
-	localHTTPS  = flag.Bool("local-https", false, "Enable HTTPS tunneling")
-	open        = flag.Bool("open", false, "Automatically open tunnel URL in browser")
-	openShort   = flag.Bool("o", false, "Automatically open tunnel URL in browser (short)")
-	printReqs   = flag.Bool("print-requests", false, "Log request information")
-	help        = flag.Bool("help", false, "Show help")
-	version     = flag.Bool("version", false, "Show version")
+	port       = flag.Int("port", 0, "Internal HTTP server port")
+	portShort  = flag.Int("p", 0, "Internal HTTP server port (short)")
+	host       = flag.String("host", "https://localtunnel.me", "Upstream server")
+	hostShort  = flag.String("h", "https://localtunnel.me", "Upstream server (short)")
+	subdomain  = flag.String("subdomain", "", "Request specific subdomain")
+	subShort   = flag.String("s", "", "Request specific subdomain (short)")
+	localHost  = flag.String("local-host", "localhost", "Tunnel traffic to alternative localhost")
+	localShort = flag.String("l", "localhost", "Tunnel traffic to alternative localhost (short)")
+	localHTTPS = flag.Bool("local-https", false, "Enable HTTPS tunneling")
+	open       = flag.Bool("open", false, "Automatically open tunnel URL in browser")
+	openShort  = flag.Bool("o", false, "Automatically open tunnel URL in browser (short)")
+	printReqs  = flag.Bool("print-requests", false, "Log request information")
+	help       = flag.Bool("help", false, "Show help")
+	version    = flag.Bool("version", false, "Show version")
 )
 
 const VERSION = "1.0.0"
@@ -172,9 +172,9 @@ func main() {
 			select {
 			case req := <-events.Request:
 				if *printReqs {
-					fmt.Printf("%s %s %s\n", 
-						time.Now().Format("15:04:05"), 
-						req.Method, 
+					fmt.Printf("%s %s %s\n",
+						time.Now().Format("15:04:05"),
+						req.Method,
 						req.Path)
 				}
 			case err := <-events.Error:

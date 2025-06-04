@@ -70,7 +70,7 @@ func TestConnectAndOpen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get tunnel URL: %v", err)
 	}
-	
+
 	if url != "https://test.localtunnel.me" {
 		t.Errorf("Expected URL 'https://test.localtunnel.me', got '%s'", url)
 	}
@@ -109,7 +109,7 @@ func TestConnectWithContext(t *testing.T) {
 
 func TestConnectWithContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	tunnel, err := ConnectWithContext(ctx, 8080, nil)
 	if err != nil {
 		t.Fatalf("ConnectWithContext() failed: %v", err)

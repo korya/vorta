@@ -255,7 +255,7 @@ func TestTunnelWithContext(t *testing.T) {
 
 	// Test that canceling the parent context cancels the tunnel context
 	cancel()
-	
+
 	select {
 	case <-tunnel.ctx.Done():
 		// Good, tunnel context was cancelled when parent was cancelled

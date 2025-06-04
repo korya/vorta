@@ -14,12 +14,12 @@ func TestNewTunnelCluster(t *testing.T) {
 		Port:    12345,
 		MaxConn: 5,
 	}
-	
+
 	options := &TunnelOptions{
 		Port:      8080,
 		LocalHost: "localhost",
 	}
-	
+
 	events := &TunnelEvents{
 		URL:     make(chan string, 1),
 		Error:   make(chan error, 10),
@@ -50,12 +50,12 @@ func TestTunnelClusterClose(t *testing.T) {
 		Port:    12345,
 		MaxConn: 5,
 	}
-	
+
 	options := &TunnelOptions{
 		Port:      8080,
 		LocalHost: "localhost",
 	}
-	
+
 	events := &TunnelEvents{
 		URL:     make(chan string, 1),
 		Error:   make(chan error, 10),
@@ -70,7 +70,7 @@ func TestTunnelClusterClose(t *testing.T) {
 
 	// Should not panic
 	cluster.Close()
-	
+
 	// Multiple closes should be safe
 	cluster.Close()
 }
@@ -152,19 +152,19 @@ func TestExtractRequestInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := extractRequestInfo(tt.data)
-			
+
 			if tt.expected == nil {
 				if result != nil {
 					t.Errorf("Expected nil, got %+v", result)
 				}
 				return
 			}
-			
+
 			if result == nil {
 				t.Errorf("Expected %+v, got nil", tt.expected)
 				return
 			}
-			
+
 			if result.Method != tt.expected.Method {
 				t.Errorf("Expected method %s, got %s", tt.expected.Method, result.Method)
 			}
@@ -236,7 +236,7 @@ func TestTunnelConnectionConnect(t *testing.T) {
 	}
 
 	conn.close()
-	
+
 	if conn.isActive() {
 		t.Error("Connection should not be active after close")
 	}
