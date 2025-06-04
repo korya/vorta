@@ -1,4 +1,4 @@
-# Vorta - stable and easy HTTP tunneling
+# vrata - stable and easy HTTP tunneling
 
 A faithful Go port of the [localtunnel](https://github.com/localtunnel/localtunnel) Node.js project. Expose your localhost to the world for easy testing and sharing!
 
@@ -14,15 +14,15 @@ A faithful Go port of the [localtunnel](https://github.com/localtunnel/localtunn
 ## Installation
 
 ```bash
-go install github.com/korya/vorta/cmd/vorta@latest
+go install github.com/korya/vrata/cmd/vrata@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/korya/vorta
-cd vorta
-go build -o vorta ./cmd/vorta
+git clone https://github.com/korya/vrata
+cd vrata
+go build -o vrata ./cmd/vrata
 ```
 
 ## CLI Usage
@@ -30,22 +30,22 @@ go build -o vorta ./cmd/vorta
 Basic usage:
 ```bash
 # Expose local server on port 8080
-vorta --port 8080
+vrata --port 8080
 
 # Request a specific subdomain
-vorta --port 3000 --subdomain myapp
+vrata --port 3000 --subdomain myapp
 
 # Open tunnel URL in browser automatically
-vorta --port 8080 --open
+vrata --port 8080 --open
 
 # Use custom upstream server
-vorta --port 8080 --host https://my-tunnel-server.com
+vrata --port 8080 --host https://my-tunnel-server.com
 
 # Tunnel HTTPS traffic
-vorta --port 8443 --local-https
+vrata --port 8443 --local-https
 
 # Print request logs
-vorta --port 8080 --print-requests
+vrata --port 8080 --print-requests
 ```
 
 Command-line options:
@@ -72,18 +72,18 @@ import (
     "fmt"
     "log"
     
-    "github.com/korya/vorta"
+    "github.com/korya/vrata"
 )
 
 func main() {
     // Create tunnel options
-    options := &vorta.TunnelOptions{
+    options := &vrata.TunnelOptions{
         Port:      8080,
         Subdomain: "myapp", // optional
     }
     
     // Create and open tunnel
-    tunnel, err := vorta.ConnectAndOpen(8080, options)
+    tunnel, err := vrata.ConnectAndOpen(8080, options)
     if err != nil {
         log.Fatal(err)
     }
@@ -122,7 +122,7 @@ import (
     "context"
     "time"
     
-    "github.com/korya/vorta"
+    "github.com/korya/vrata"
 )
 
 func main() {
@@ -131,7 +131,7 @@ func main() {
     defer cancel()
     
     // Create tunnel with context
-    tunnel, err := vorta.ConnectWithContext(ctx, 8080, nil)
+    tunnel, err := vrata.ConnectWithContext(ctx, 8080, nil)
     if err != nil {
         panic(err)
     }
@@ -209,7 +209,7 @@ Returns the events channels for monitoring.
 
 This Go implementation provides the same functionality as the original Node.js localtunnel:
 
-| Feature | Node.js | Go (Vorta) |
+| Feature | Node.js | Go (vrata) |
 |---------|---------|------------|
 | CLI Interface | ✅ | ✅ |
 | Programmatic API | ✅ | ✅ |

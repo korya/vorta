@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-"github.com/korya/vorta"
+	"github.com/korya/vrata"
 )
 
 // CLI options
@@ -119,7 +119,7 @@ func main() {
 	shouldOpen := *open || *openShort
 
 	// Create tunnel options
-	options := &vorta.TunnelOptions{
+	options := &vrata.TunnelOptions{
 		Port:       targetPort,
 		Host:       tunnelHost,
 		Subdomain:  tunnelSubdomain,
@@ -128,7 +128,7 @@ func main() {
 	}
 
 	// Create tunnel
-	tunnel, err := vorta.NewTunnel(targetPort, options)
+	tunnel, err := vrata.NewTunnel(targetPort, options)
 	if err != nil {
 		log.Fatalf("Failed to create tunnel: %v", err)
 	}
@@ -160,7 +160,7 @@ func main() {
 
 	// Open URL in browser if requested
 	if shouldOpen {
-		if err := vorta.OpenURL(tunnelURL); err != nil {
+		if err := vrata.OpenURL(tunnelURL); err != nil {
 			fmt.Printf("Failed to open URL in browser: %v\n", err)
 		}
 	}

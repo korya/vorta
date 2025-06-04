@@ -1,3 +1,3 @@
-module github.com/korya/vorta
+module github.com/korya/vrata
 
 go 1.24.3

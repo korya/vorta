@@ -1,4 +1,4 @@
-project_name: vorta
+project_name: vrata
 
 before:
   hooks:
@@ -61,20 +61,20 @@ changelog:
 release:
   github:
     owner: korya
-    name: vorta
+    name: vrata
   draft: false
   prerelease: auto
   name_template: "{{.ProjectName}} {{.Version}}"
 
 brews:
-  - name: vorta
+  - name: vrata
     ids:
       - default
     tap:
       owner: korya
       name: homebrew-tap
     folder: Formula
-    homepage: "https://github.com/korya/vorta"
+    homepage: "https://github.com/korya/vrata"
     description: "Go implementation of localtunnel - expose localhost to the world"
     license: "MIT"
     test: |
@@ -86,9 +86,9 @@ nfpms:
   - id: packages
     builds:
       - lt
-    package_name: vorta
+    package_name: vrata
     vendor: korya
-    homepage: "https://github.com/korya/vorta"
+    homepage: "https://github.com/korya/vrata"
     maintainer: "korya <korya@example.com>"
     description: "Go implementation of localtunnel - expose localhost to the world"
     license: "MIT"

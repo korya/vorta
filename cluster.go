@@ -1,4 +1,4 @@
-package vorta
+package vrata
 
 import (
 	"context"

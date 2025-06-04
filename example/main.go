@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/korya/vorta"
+	"github.com/korya/vrata"
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 	time.Sleep(1 * time.Second)
 	
 	// Create tunnel options
-	options := &vorta.TunnelOptions{
+	options := &vrata.TunnelOptions{
 		Port:      8080,
 		Host:      "https://localtunnel.me",
 		Subdomain: "", // Let server assign random subdomain
@@ -39,7 +39,7 @@ func main() {
 	}
 	
 	// Create and open tunnel
-	tunnel, err := vorta.ConnectAndOpen(8080, options)
+	tunnel, err := vrata.ConnectAndOpen(8080, options)
 	if err != nil {
 		log.Fatalf("Failed to create tunnel: %v", err)
 	}

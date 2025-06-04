@@ -1,5 +1,5 @@
-// Package vorta provides a Go implementation of localtunnel
-package vorta
+// Package vrata provides a Go implementation of localtunnel
+package vrata
 
 import (
 	"context"
