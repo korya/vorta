@@ -67,18 +67,22 @@ func NewTunnel(port int, options *TunnelOptions) (*Tunnel, error) {
 	options.Port = port
 
 	if options.Host == "" {
-		options.Host = "https://localtunnel.me"
+		const defaultHost = "https://localtunnel.me"
+		options.Host = defaultHost
 	}
 	if options.LocalHost == "" {
-		options.LocalHost = "localhost"
+		const defaultLocalHost = "localhost"
+		options.LocalHost = defaultLocalHost
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	const errorChanSize = 10
+	const requestChanSize = 100
 	events := &TunnelEvents{
 		URL:     make(chan string, 1),
-		Error:   make(chan error, 10),
-		Request: make(chan RequestInfo, 100),
+		Error:   make(chan error, errorChanSize),
+		Request: make(chan RequestInfo, requestChanSize),
 		Close:   make(chan struct{}, 1),
 	}
 
@@ -185,15 +189,20 @@ func (t *Tunnel) requestTunnel() (*TunnelInfo, error) {
 		reqURL += "?new="
 	}
 
+	const requestTimeout = 10 * time.Second
 	client := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: requestTimeout,
 	}
 
-	resp, err := client.Get(reqURL)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", reqURL, http.NoBody)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("server responded with status %d", resp.StatusCode)
@@ -222,7 +231,7 @@ func OpenURL(url string) error {
 		cmd = "xdg-open"
 	}
 	args = append(args, url)
-	return exec.Command(cmd, args...).Start()
+	return exec.Command(cmd, args...).Start() // #nosec G204 - Command is constructed safely
 }
 
 // HeaderHostTransformer modifies HTTP headers to use localhost
@@ -245,18 +254,18 @@ func (h *HeaderHostTransformer) Transform(reader io.Reader, writer io.Writer) er
 	}
 
 	firstLine := scanner.Text()
-	fmt.Fprintf(writer, "%s\r\n", firstLine)
+	_, _ = fmt.Fprintf(writer, "%s\r\n", firstLine) //nolint:errcheck
 
 	// Read and transform headers
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
-			fmt.Fprintf(writer, "\r\n")
+			_, _ = fmt.Fprintf(writer, "\r\n") //nolint:errcheck
 			break
 		}
 
 		if strings.HasPrefix(strings.ToLower(line), "host:") {
-			fmt.Fprintf(writer, "Host: %s\r\n", h.host)
+			_, _ = fmt.Fprintf(writer, "Host: %s\r\n", h.host) //nolint:errcheck
 		} else {
 			fmt.Fprintf(writer, "%s\r\n", line)
 		}

@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// TunnelCluster manages multiple connections to the localtunnel server
+// TunnelCluster manages multiple connections to the localtunnel server.
 type TunnelCluster struct {
 	info        *TunnelInfo
 	options     *TunnelOptions
@@ -22,7 +22,7 @@ type TunnelCluster struct {
 	closed      bool
 }
 
-// TunnelConnection represents a single connection to the tunnel server
+// TunnelConnection represents a single connection to the tunnel server.
 type TunnelConnection struct {
 	cluster *TunnelCluster
 	conn    net.Conn
@@ -30,7 +30,7 @@ type TunnelConnection struct {
 	mutex   sync.RWMutex
 }
 
-// NewTunnelCluster creates a new tunnel cluster
+// NewTunnelCluster creates a new tunnel cluster.
 func NewTunnelCluster(info *TunnelInfo, options *TunnelOptions, events *TunnelEvents) (*TunnelCluster, error) {
 	return &TunnelCluster{
 		info:    info,
@@ -39,7 +39,7 @@ func NewTunnelCluster(info *TunnelInfo, options *TunnelOptions, events *TunnelEv
 	}, nil
 }
 
-// Start begins the cluster operation
+// Start begins the cluster operation.
 func (tc *TunnelCluster) Start(ctx context.Context) error {
 	maxConn := tc.info.MaxConn
 	if maxConn <= 0 {
@@ -76,7 +76,7 @@ func (tc *TunnelCluster) Start(ctx context.Context) error {
 	return nil
 }
 
-// Close shuts down the cluster
+// Close shuts down the cluster.
 func (tc *TunnelCluster) Close() {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
@@ -94,7 +94,8 @@ func (tc *TunnelCluster) Close() {
 
 // maintainConnections keeps the connection pool healthy
 func (tc *TunnelCluster) maintainConnections(ctx context.Context, host string, port int) {
-	ticker := time.NewTicker(30 * time.Second)
+	const maintenanceInterval = 30 * time.Second
+	ticker := time.NewTicker(maintenanceInterval)
 	defer ticker.Stop()
 
 	for {
@@ -135,7 +136,8 @@ func (conn *TunnelConnection) connect(ctx context.Context, host string, port int
 	address := fmt.Sprintf("%s:%d", host, port)
 
 	// Connect to the tunnel server
-	netConn, err := net.DialTimeout("tcp", address, 10*time.Second)
+	const dialTimeout = 10 * time.Second
+	netConn, err := net.DialTimeout("tcp", address, dialTimeout)
 	if err != nil {
 		select {
 		case conn.cluster.events.Error <- fmt.Errorf("failed to connect to %s: %w", address, err):
@@ -163,7 +165,8 @@ func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 		}
 
 		// Set read deadline
-		conn.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		const readTimeout = 60 * time.Second
+		_ = conn.conn.SetReadDeadline(time.Now().Add(readTimeout)) //nolint:errcheck
 
 		// Create connection to local server
 		localConn, err := conn.connectToLocal()
@@ -190,7 +193,7 @@ func (conn *TunnelConnection) connectToLocal() (net.Conn, error) {
 	if conn.cluster.options.LocalHTTPS {
 		// Use TLS for HTTPS
 		config := &tls.Config{
-			InsecureSkipVerify: true, // For local development
+			InsecureSkipVerify: true, // #nosec G402 - For local development
 		}
 		return tls.Dial("tcp", address, config)
 	}
@@ -200,7 +203,7 @@ func (conn *TunnelConnection) connectToLocal() (net.Conn, error) {
 
 // proxyConnection handles bidirectional data transfer
 func (conn *TunnelConnection) proxyConnection(localConn net.Conn, transformer *HeaderHostTransformer) {
-	defer localConn.Close()
+	defer func() { _ = localConn.Close() }() //nolint:errcheck
 
 	// Create pipes for bidirectional communication
 	done := make(chan struct{}, 2)
@@ -210,16 +213,16 @@ func (conn *TunnelConnection) proxyConnection(localConn net.Conn, transformer *H
 		defer func() { done <- struct{}{} }()
 
 		// For the first request, transform headers
-		transformer.Transform(conn.conn, localConn)
+		_ = transformer.Transform(conn.conn, localConn) //nolint:errcheck
 
 		// Then copy the rest directly
-		io.Copy(localConn, conn.conn)
+		_, _ = io.Copy(localConn, conn.conn) //nolint:errcheck
 	}()
 
 	// Local -> Remote
 	go func() {
 		defer func() { done <- struct{}{} }()
-		io.Copy(conn.conn, localConn)
+		_, _ = io.Copy(conn.conn, localConn) //nolint:errcheck
 	}()
 
 	// Wait for either direction to complete
@@ -263,7 +266,7 @@ func (conn *TunnelConnection) close() {
 
 	conn.active = false
 	if conn.conn != nil {
-		conn.conn.Close()
+		_ = conn.conn.Close() //nolint:errcheck
 		conn.conn = nil
 	}
 }

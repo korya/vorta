@@ -12,11 +12,11 @@ import (
 func main() {
 	// Start a simple HTTP server on port 8080
 	go func() {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 			fmt.Fprintf(w, "Hello from Go localtunnel! Time: %s\n", time.Now().Format(time.RFC3339))
 		})
 
-		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			fmt.Fprintf(w, "OK")
 		})
@@ -43,12 +43,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create tunnel: %v", err)
 	}
-	defer tunnel.Close()
+	defer func() { _ = tunnel.Close() }()
 
 	// Get the tunnel URL
 	url, err := tunnel.URL()
 	if err != nil {
-		log.Fatalf("Failed to get tunnel URL: %v", err)
+		log.Printf("Failed to get tunnel URL: %v", err)
+		return
 	}
 
 	fmt.Printf("🌍 Tunnel is live at: %s\n", url)
