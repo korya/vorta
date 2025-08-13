@@ -1,3 +1,5 @@
+version: 2
+
 run:
   timeout: 5m
   issues-exit-code: 1
@@ -5,14 +7,19 @@ run:
   modules-download-mode: readonly
 
 output:
-  formats:
-    - format: colored-line-number
+  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   sort-results: true
 
 linters-settings:
+  depguard:
+    rules:
+      Main:
+        allow:
+          - $gostd
+          - github.com/korya/vrata
+
   dupl:
     threshold: 100
   
@@ -23,9 +30,6 @@ linters-settings:
   exhaustive:
     check-generated: false
     default-signifies-exhaustive: false
-  
-  gci:
-    local-prefixes: github.com/korya/vrata
   
   goconst:
     min-len: 2
@@ -51,19 +55,25 @@ linters-settings:
     scope: declarations
     capital: false
   
-  gofmt:
-    simplify: true
-  
-  goimports:
-    local-prefixes: github.com/korya/vrata
-  
   mnd:
-    checks: argument,case,condition,operation,return,assign
-    ignored-numbers: 0,1,2,3
-    ignored-functions: strings.SplitN
+    checks:
+      - argument
+      - case
+      - condition
+      - operation
+      - return
+      - assign
+    ignored-numbers:
+      - 0
+      - 1
+      - 2
+      - 3
+    ignored-functions:
+      - strings.SplitN
   
   govet:
-    check-shadowing: true
+    enable:
+      - shadow
     settings:
       printf:
         funcs:
@@ -73,16 +83,13 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
   
   lll:
-    line-length: 140
+    line-length: 120
   
-  maligned:
-    suggest-new: true
   
   misspell:
     locale: US
   
   nolintlint:
-    allow-leading-space: true
     allow-unused: false
     require-explanation: false
     require-specific: false
@@ -106,32 +113,45 @@ linters-settings:
     check-exported: false
   
   unused:
-    check-exported: false
+    field-writes-are-uses: true
+    post-statements-are-reads: false
+    exported-fields-are-used: true
+    parameters-are-used: true
+    local-variables-are-used: true
+    generated-is-used: true
   
   whitespace:
     multi-if: false
     multi-func: false
 
+formatters:
+  gci:
+    sections:
+      - standard
+      - default  
+      - prefix(github.com/korya/vrata)
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/korya/vrata
+  gosimple:
+
 linters:
   enable:
     - bodyclose
-    - depguard
+    # - depguard
     - dogsled
     - dupl
     - errcheck
     - copyloopvar
     - exhaustive
-    - gci
     - goconst
     - gocritic
     - gocyclo
     - godot
-    - gofmt
-    - goimports
     - mnd
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - lll
@@ -141,22 +161,12 @@ linters:
     - nolintlint
     - prealloc
     - revive
-    - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unparam
     - unused
     - whitespace
 
-  disable:
-    - deadcode
-    - exportloopref
-    - gomnd
-    - structcheck
-    - varcheck
-    - maligned
-    - interfacer
+  disable: []
 
 issues:
   exclude-rules:

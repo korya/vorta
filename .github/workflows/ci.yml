@@ -114,33 +114,33 @@ jobs:
       run: go mod download
 
     - name: Build CLI binary
-      run: go build -v -o lt${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./cmd/lt
+      run: go build -v -o vrata${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./cmd/vrata
 
     - name: Build example
       run: go build -v -o example${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./example
 
     - name: Test CLI help (Unix)
       if: matrix.os != 'windows-latest'
-      run: ./lt --help
+      run: ./vrata --help
 
     - name: Test CLI help (Windows)
       if: matrix.os == 'windows-latest'
-      run: ./lt.exe --help
+      run: ./vrata.exe --help
 
     - name: Test CLI version (Unix)
       if: matrix.os != 'windows-latest'
-      run: ./lt --version
+      run: ./vrata --version
 
     - name: Test CLI version (Windows)
       if: matrix.os == 'windows-latest'
-      run: ./lt.exe --version
+      run: ./vrata.exe --version
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: binaries-${{ matrix.os }}
         path: |
-          lt*
+          vrata*
           example*
         retention-days: 7
 

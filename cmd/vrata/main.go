@@ -1,3 +1,4 @@
+// Package main provides the vrata command-line tool.
 package main
 
 import (
@@ -14,7 +15,7 @@ import (
 	"github.com/korya/vrata"
 )
 
-// CLI options
+// CLI options.
 var (
 	port       = flag.Int("port", 0, "Internal HTTP server port")
 	portShort  = flag.Int("p", 0, "Internal HTTP server port (short)")
@@ -32,6 +33,7 @@ var (
 	version    = flag.Bool("version", false, "Show version")
 )
 
+// VERSION is the current version of the application.
 const VERSION = "1.0.0"
 
 func usage() {
@@ -141,7 +143,7 @@ func main() {
 	go func() {
 		<-sigChan
 		fmt.Println("\nShutting down tunnel...")
-		tunnel.Close()
+		_ = tunnel.Close()
 		cancel()
 	}()
 
