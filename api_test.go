@@ -30,7 +30,7 @@ func TestConnectAndOpen(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		_, _ = w.Write([]byte(`{
 			"id": "test-tunnel-id",
 			"url": "https://test.localtunnel.me",
 			"port": 12345,
@@ -42,7 +42,7 @@ func TestConnectAndOpen(t *testing.T) {
 	// Start a local HTTP server on a random port
 	localServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Hello World"))
+		_, _ = w.Write([]byte("Hello World"))
 	}))
 	defer localServer.Close()
 
@@ -172,7 +172,7 @@ func TestConnectInvalidPort(t *testing.T) {
 	}
 }
 
-// Add import for net package in the cluster_test.go fix
+// Add import for net package in the cluster_test.go fix.
 func init() {
 	// This ensures the net package is imported for cluster_test.go
 }

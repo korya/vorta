@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-// TunnelOptions holds configuration for creating a tunnel
+// TunnelOptions holds configuration for creating a tunnel.
 type TunnelOptions struct {
 	Port       int
 	Host       string
@@ -24,7 +24,7 @@ type TunnelOptions struct {
 	LocalHTTPS bool
 }
 
-// TunnelInfo represents the server response for tunnel creation
+// TunnelInfo represents the server response for tunnel creation.
 type TunnelInfo struct {
 	ID      string `json:"id"`
 	URL     string `json:"url"`
@@ -32,14 +32,14 @@ type TunnelInfo struct {
 	MaxConn int    `json:"max_conn_count"`
 }
 
-// RequestInfo contains information about proxied requests
+// RequestInfo contains information about proxied requests.
 type RequestInfo struct {
 	Method string
 	Path   string
 	URL    string
 }
 
-// TunnelEvents provides channels for tunnel events
+// TunnelEvents provides channels for tunnel events.
 type TunnelEvents struct {
 	URL     chan string
 	Error   chan error
@@ -47,7 +47,7 @@ type TunnelEvents struct {
 	Close   chan struct{}
 }
 
-// Tunnel represents a localtunnel connection
+// Tunnel represents a localtunnel connection.
 type Tunnel struct {
 	options *TunnelOptions
 	info    *TunnelInfo
@@ -59,7 +59,7 @@ type Tunnel struct {
 	mutex   sync.RWMutex
 }
 
-// NewTunnel creates a new tunnel instance
+// NewTunnel creates a new tunnel instance.
 func NewTunnel(port int, options *TunnelOptions) (*Tunnel, error) {
 	if options == nil {
 		options = &TunnelOptions{}
@@ -94,7 +94,7 @@ func NewTunnel(port int, options *TunnelOptions) (*Tunnel, error) {
 	}, nil
 }
 
-// Open establishes the tunnel connection
+// Open establishes the tunnel connection.
 func (t *Tunnel) Open() error {
 	// Register with the localtunnel server
 	info, err := t.requestTunnel()
@@ -132,7 +132,7 @@ func (t *Tunnel) Open() error {
 	return nil
 }
 
-// Close shuts down the tunnel
+// Close shuts down the tunnel.
 func (t *Tunnel) Close() error {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
@@ -156,7 +156,7 @@ func (t *Tunnel) Close() error {
 	return nil
 }
 
-// URL returns the tunnel URL (blocking until available)
+// URL returns the tunnel URL (blocking until available).
 func (t *Tunnel) URL() (string, error) {
 	select {
 	case url := <-t.events.URL:
@@ -168,12 +168,12 @@ func (t *Tunnel) URL() (string, error) {
 	}
 }
 
-// Events returns the events channels
+// Events returns the events channels.
 func (t *Tunnel) Events() *TunnelEvents {
 	return t.events
 }
 
-// requestTunnel makes an HTTP request to get tunnel info from the server
+// requestTunnel makes an HTTP request to get tunnel info from the server.
 func (t *Tunnel) requestTunnel() (*TunnelInfo, error) {
 	reqURL := t.options.Host
 	if t.options.Subdomain != "" {
@@ -202,7 +202,7 @@ func (t *Tunnel) requestTunnel() (*TunnelInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = resp.Body.Close() }() //nolint:errcheck
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("server responded with status %d", resp.StatusCode)
@@ -216,7 +216,7 @@ func (t *Tunnel) requestTunnel() (*TunnelInfo, error) {
 	return &info, nil
 }
 
-// OpenURL opens a URL in the default browser
+// OpenURL opens a URL in the default browser.
 func OpenURL(url string) error {
 	var cmd string
 	var args []string
@@ -231,20 +231,20 @@ func OpenURL(url string) error {
 		cmd = "xdg-open"
 	}
 	args = append(args, url)
-	return exec.Command(cmd, args...).Start() // #nosec G204 - Command is constructed safely
+	return exec.CommandContext(context.Background(), cmd, args...).Start() // #nosec G204 - Command is constructed safely
 }
 
-// HeaderHostTransformer modifies HTTP headers to use localhost
+// HeaderHostTransformer modifies HTTP headers to use localhost.
 type HeaderHostTransformer struct {
 	host string
 }
 
-// NewHeaderHostTransformer creates a new header transformer
+// NewHeaderHostTransformer creates a new header transformer.
 func NewHeaderHostTransformer(host string) *HeaderHostTransformer {
 	return &HeaderHostTransformer{host: host}
 }
 
-// Transform modifies the request headers
+// Transform modifies the request headers.
 func (h *HeaderHostTransformer) Transform(reader io.Reader, writer io.Writer) error {
 	scanner := bufio.NewScanner(reader)
 
@@ -254,20 +254,20 @@ func (h *HeaderHostTransformer) Transform(reader io.Reader, writer io.Writer) er
 	}
 
 	firstLine := scanner.Text()
-	_, _ = fmt.Fprintf(writer, "%s\r\n", firstLine) //nolint:errcheck
+	_, _ = fmt.Fprintf(writer, "%s\r\n", firstLine)
 
 	// Read and transform headers
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
-			_, _ = fmt.Fprintf(writer, "\r\n") //nolint:errcheck
+			_, _ = fmt.Fprintf(writer, "\r\n")
 			break
 		}
 
 		if strings.HasPrefix(strings.ToLower(line), "host:") {
-			_, _ = fmt.Fprintf(writer, "Host: %s\r\n", h.host) //nolint:errcheck
+			_, _ = fmt.Fprintf(writer, "Host: %s\r\n", h.host)
 		} else {
-			fmt.Fprintf(writer, "%s\r\n", line)
+			_, _ = fmt.Fprintf(writer, "%s\r\n", line)
 		}
 	}
 

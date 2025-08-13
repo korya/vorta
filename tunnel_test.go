@@ -101,7 +101,7 @@ func TestTunnelEvents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewTunnel() failed: %v", err)
 	}
-	defer tunnel.Close()
+	defer func() { _ = tunnel.Close() }()
 
 	events := tunnel.Events()
 	if events == nil {
@@ -238,7 +238,7 @@ func TestConnectAPI(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Connect() failed: %v", err)
 	}
-	defer tunnel.Close()
+	defer func() { _ = tunnel.Close() }()
 
 	if tunnel.options.Port != 8080 {
 		t.Errorf("Expected port 8080, got %d", tunnel.options.Port)
@@ -253,7 +253,7 @@ func TestTunnelWithContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ConnectWithContext() failed: %v", err)
 	}
-	defer tunnel.Close()
+	defer func() { _ = tunnel.Close() }()
 
 	// Test that canceling the parent context cancels the tunnel context
 	cancel()

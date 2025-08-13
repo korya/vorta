@@ -12,6 +12,12 @@ import (
 	"time"
 )
 
+const (
+	// Communication constants.
+	bidirectionalChannelSize = 2
+	minHTTPRequestParts      = 3
+)
+
 // TunnelCluster manages multiple connections to the localtunnel server.
 type TunnelCluster struct {
 	info        *TunnelInfo
@@ -92,7 +98,7 @@ func (tc *TunnelCluster) Close() {
 	}
 }
 
-// maintainConnections keeps the connection pool healthy
+// maintainConnections keeps the connection pool healthy.
 func (tc *TunnelCluster) maintainConnections(ctx context.Context, host string, port int) {
 	const maintenanceInterval = 30 * time.Second
 	ticker := time.NewTicker(maintenanceInterval)
@@ -108,7 +114,7 @@ func (tc *TunnelCluster) maintainConnections(ctx context.Context, host string, p
 	}
 }
 
-// checkConnections verifies and recreates dead connections
+// checkConnections verifies and recreates dead connections.
 func (tc *TunnelCluster) checkConnections(ctx context.Context, host string, port int) {
 	tc.mutex.Lock()
 	defer tc.mutex.Unlock()
@@ -124,7 +130,7 @@ func (tc *TunnelCluster) checkConnections(ctx context.Context, host string, port
 	}
 }
 
-// connect establishes a connection to the tunnel server
+// connect establishes a connection to the tunnel server.
 func (conn *TunnelConnection) connect(ctx context.Context, host string, port int) {
 	conn.mutex.Lock()
 	defer conn.mutex.Unlock()
@@ -137,7 +143,8 @@ func (conn *TunnelConnection) connect(ctx context.Context, host string, port int
 
 	// Connect to the tunnel server
 	const dialTimeout = 10 * time.Second
-	netConn, err := net.DialTimeout("tcp", address, dialTimeout)
+	dialer := &net.Dialer{Timeout: dialTimeout}
+	netConn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		select {
 		case conn.cluster.events.Error <- fmt.Errorf("failed to connect to %s: %w", address, err):
@@ -153,7 +160,7 @@ func (conn *TunnelConnection) connect(ctx context.Context, host string, port int
 	go conn.handleConnection(ctx)
 }
 
-// handleConnection processes incoming requests on this connection
+// handleConnection processes incoming requests on this connection.
 func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 	defer conn.close()
 
@@ -166,7 +173,7 @@ func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 
 		// Set read deadline
 		const readTimeout = 60 * time.Second
-		_ = conn.conn.SetReadDeadline(time.Now().Add(readTimeout)) //nolint:errcheck
+		_ = conn.conn.SetReadDeadline(time.Now().Add(readTimeout))
 
 		// Create connection to local server
 		localConn, err := conn.connectToLocal()
@@ -179,14 +186,16 @@ func (conn *TunnelConnection) handleConnection(ctx context.Context) {
 		}
 
 		// Create header transformer
-		transformer := NewHeaderHostTransformer(conn.cluster.options.LocalHost + fmt.Sprintf(":%d", conn.cluster.options.Port))
+		transformer := NewHeaderHostTransformer(
+			conn.cluster.options.LocalHost + fmt.Sprintf(":%d", conn.cluster.options.Port),
+		)
 
 		// Handle the request/response cycle
 		go conn.proxyConnection(localConn, transformer)
 	}
 }
 
-// connectToLocal creates a connection to the local server
+// connectToLocal creates a connection to the local server.
 func (conn *TunnelConnection) connectToLocal() (net.Conn, error) {
 	address := fmt.Sprintf("%s:%d", conn.cluster.options.LocalHost, conn.cluster.options.Port)
 
@@ -195,41 +204,43 @@ func (conn *TunnelConnection) connectToLocal() (net.Conn, error) {
 		config := &tls.Config{
 			InsecureSkipVerify: true, // #nosec G402 - For local development
 		}
-		return tls.Dial("tcp", address, config)
+		dialer := &tls.Dialer{Config: config}
+		return dialer.DialContext(context.Background(), "tcp", address)
 	}
 
-	return net.Dial("tcp", address)
+	dialer := &net.Dialer{}
+	return dialer.DialContext(context.Background(), "tcp", address)
 }
 
-// proxyConnection handles bidirectional data transfer
+// proxyConnection handles bidirectional data transfer.
 func (conn *TunnelConnection) proxyConnection(localConn net.Conn, transformer *HeaderHostTransformer) {
-	defer func() { _ = localConn.Close() }() //nolint:errcheck
+	defer func() { _ = localConn.Close() }()
 
 	// Create pipes for bidirectional communication
-	done := make(chan struct{}, 2)
+	done := make(chan struct{}, bidirectionalChannelSize)
 
 	// Remote -> Local (with header transformation)
 	go func() {
 		defer func() { done <- struct{}{} }()
 
 		// For the first request, transform headers
-		_ = transformer.Transform(conn.conn, localConn) //nolint:errcheck
+		_ = transformer.Transform(conn.conn, localConn)
 
 		// Then copy the rest directly
-		_, _ = io.Copy(localConn, conn.conn) //nolint:errcheck
+		_, _ = io.Copy(localConn, conn.conn)
 	}()
 
 	// Local -> Remote
 	go func() {
 		defer func() { done <- struct{}{} }()
-		_, _ = io.Copy(conn.conn, localConn) //nolint:errcheck
+		_, _ = io.Copy(conn.conn, localConn)
 	}()
 
 	// Wait for either direction to complete
 	<-done
 }
 
-// extractRequestInfo parses HTTP request for logging
+// extractRequestInfo parses HTTP request for logging.
 func extractRequestInfo(data []byte) *RequestInfo {
 	lines := strings.Split(string(data), "\r\n")
 	if len(lines) == 0 {
@@ -237,7 +248,7 @@ func extractRequestInfo(data []byte) *RequestInfo {
 	}
 
 	parts := strings.Fields(lines[0])
-	if len(parts) < 3 {
+	if len(parts) < minHTTPRequestParts {
 		return nil
 	}
 
@@ -248,14 +259,14 @@ func extractRequestInfo(data []byte) *RequestInfo {
 	}
 }
 
-// isActive checks if the connection is still active
+// isActive checks if the connection is still active.
 func (conn *TunnelConnection) isActive() bool {
 	conn.mutex.RLock()
 	defer conn.mutex.RUnlock()
 	return conn.active
 }
 
-// close terminates the connection
+// close terminates the connection.
 func (conn *TunnelConnection) close() {
 	conn.mutex.Lock()
 	defer conn.mutex.Unlock()
@@ -266,7 +277,7 @@ func (conn *TunnelConnection) close() {
 
 	conn.active = false
 	if conn.conn != nil {
-		_ = conn.conn.Close() //nolint:errcheck
+		_ = conn.conn.Close()
 		conn.conn = nil
 	}
 }

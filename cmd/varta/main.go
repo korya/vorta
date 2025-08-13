@@ -1,3 +1,4 @@
+// Package main provides the vrata command-line tool.
 package main
 
 import (
@@ -142,7 +143,7 @@ func main() {
 	go func() {
 		<-sigChan
 		fmt.Println("\nShutting down tunnel...")
-		_ = tunnel.Close() //nolint:errcheck
+		_ = tunnel.Close()
 		cancel()
 	}()
 

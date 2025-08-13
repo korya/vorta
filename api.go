@@ -7,7 +7,7 @@ import (
 )
 
 // Connect creates a new tunnel with the given port and options.
-// This is the main API function equivalent to the Node.js localtunnel() function
+// This is the main API function equivalent to the Node.js localtunnel() function.
 func Connect(port int, options *TunnelOptions) (*Tunnel, error) {
 	return NewTunnel(port, options)
 }
@@ -48,7 +48,7 @@ func ExampleUsage() {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	defer func() { _ = tunnel.Close() }() //nolint:errcheck
+	defer func() { _ = tunnel.Close() }()
 
 	// Open the tunnel
 	if err := tunnel.Open(); err != nil {
